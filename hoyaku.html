@@ -30,11 +30,18 @@
 	};
 	function translate() {
 		let text = document.getElementById('jpText').value;
-		let result = text;
+		// 句読点のみ除去
+	let cleanText = text.replace(/[。、,.]/g, "").trim();
+		let result = cleanText;
 		for (const [jp, en] of Object.entries(dict)) {
 			result = result.replaceAll(jp, en);
 		}
-		document.getElementById('result').innerText = result;
+		// もし英語に変換されていなければ「未翻訳」と表示
+		if (result === cleanText) {
+			document.getElementById('result').innerText = "未翻訳: " + text;
+		} else {
+			document.getElementById('result').innerText = result;
+		}
 	}
 	</script>
 </body>
