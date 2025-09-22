@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>学習時間記録</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background: #f0f4f8; }
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
+        h1 { color: #2c3e50; }
+        .btn { display: block; width: 100%; padding: 1em; margin-top: 1em; font-size: 1.1em; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2980b9; }
+        nav { margin-bottom: 1em; }
+        nav a { padding: 0.5em 1em; background: #eee; border-radius: 5px; text-decoration: none; color: #333; margin-right: 0.5em; }
+        nav a.active { background: #3498db; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">翻訳ツール</a>
+        <a href="gengo.html">ダッシュボード</a>
+        <a href="sgakushu.html" class="active">学習時間記録</a>
+    </nav>
+    <div class="container">
+        <h1>学習時間の記録</h1>
+        <div>
+            <span style="font-size:1.5em; font-weight:bold;">本日の学習時間：</span>
+            <span id="studyTime" style="font-size:2.5em; color:#3498db; font-weight:bold;">0分 0秒</span>
+        </div>
+        <button class="btn" id="endBtn" style="margin-top:1em;" onclick="endStudy()">学習終了</button>
+        <h2 style="margin-top:2em;">週間学習時間グラフ</h2>
+        <canvas id="weekChart" width="400" height="200"></canvas>
+    </div>
+    <script>
+        // Chart.js CDN追加
+        const chartScript = document.createElement('script');
+        chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        document.head.appendChild(chartScript);
+    let studyStart = null;
+    let totalStudyMs = 0;
+    let studyInterval = null;
+        function getTodayStr() {
+            const d = new Date();
+            return d.toISOString().slice(0, 10);
+        }
+        function restoreTodayStudyMs() {
+            const keyMs = 'studyMs_' + getTodayStr();
+            const ms = parseInt(localStorage.getItem(keyMs) || '0', 10);
+            totalStudyMs = ms;
+        }
+        function saveTodayStudyMs(ms) {
+            const keyMs = 'studyMs_' + getTodayStr();
+            localStorage.setItem(keyMs, String(ms));
+            // 互換性のため分も保存
+            const keyMin = 'study_' + getTodayStr();
+            localStorage.setItem(keyMin, String(Math.floor(ms / 60000)));
+        }
+        function getWeekStudyData() {
+            const arr = [];
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const keyMs = 'studyMs_' + d.toISOString().slice(0, 10);
+                const ms = parseInt(localStorage.getItem(keyMs) || '0', 10);
+                arr.push({
+                    date: d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }),
+                    min: Math.floor(ms / 60000)
+                });
+            }
+            return arr;
+        }
+        let weekChart = null;
+        function drawWeekChart() {
+            const data = getWeekStudyData();
+            const ctx = document.getElementById('weekChart').getContext('2d');
+            const labels = data.map(d => d.date);
+            const mins = data.map(d => d.min);
+            if (weekChart) weekChart.destroy();
+            weekChart = new window.Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '学習時間（分）',
+                        data: mins,
+                        backgroundColor: '#3498db',
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+        function updateStudyTimeDisplay() {
+            const min = Math.floor(totalStudyMs / 60000);
+            const sec = Math.floor((totalStudyMs % 60000) / 1000);
+            document.getElementById('studyTime').textContent = `${min}分 ${sec}秒`;
+            saveTodayStudyMs(totalStudyMs);
+            if (window.Chart) drawWeekChart();
+        }
+        function endStudy() {
+            if (studyStart) {
+                const now = Date.now();
+                totalStudyMs += (now - studyStart);
+                studyStart = null;
+                clearInterval(studyInterval);
+                updateStudyTimeDisplay();
+                if (window.Chart) drawWeekChart();
+                document.getElementById('endBtn').disabled = true;
+            }
+        }
+        window.addEventListener('load', () => {
+            restoreTodayStudyMs();
+            document.getElementById('endBtn').disabled = false;
+            let lastSavedMs = totalStudyMs;
+            // ページ表示と同時に自動計測開始
+            studyStart = Date.now();
+            studyInterval = setInterval(() => {
+                if (studyStart) {
+                    const now = Date.now();
+                    const sessionMs = now - studyStart;
+                    const min = Math.floor((lastSavedMs + sessionMs) / 60000);
+                    const sec = Math.floor(((lastSavedMs + sessionMs) % 60000) / 1000);
+                    document.getElementById('studyTime').textContent = `${min}分 ${sec}秒`;
+                    // 1分ごとに保存
+                    if ((lastSavedMs + sessionMs) - totalStudyMs >= 60000) {
+                        totalStudyMs = lastSavedMs + sessionMs;
+                        saveTodayStudyMs(totalStudyMs);
+                        if (window.Chart) drawWeekChart();
+                    }
+                }
+            }, 1000);
+            // Chart.jsロード前でもlocalStorageデータでグラフ描画
+            if (window.Chart) {
+                drawWeekChart();
+            } else {
+                chartScript.onload = () => {
+                    drawWeekChart();
+                };
+            }
+        });
+        window.addEventListener('beforeunload', () => {
+            if (studyStart) {
+                const now = Date.now();
+                totalStudyMs += (now - studyStart);
+                studyStart = null;
+                updateStudyTimeDisplay();
+                clearInterval(studyInterval);
+            }
+        });
+    </script>
+</body>
+</html>
