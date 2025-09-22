@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>習得言語管理</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .lang-list { margin-bottom: 1em; }
+        .learned { color: green; }
+    </style>
+</head>
+<body>
+    <h1>習得した言語一覧</h1>
+    <ul id="learnedList" class="lang-list">
+        <li>まだ習得した言語はありません</li>
+    </ul>
+    <h2>言語を追加</h2>
+    <select id="languageSelect">
+        <option value="日本語">日本語</option>
+        <option value="英語">英語</option>
+        <option value="中国語">中国語</option>
+        <option value="韓国語">韓国語</option>
+        <option value="スペイン語">スペイン語</option>
+        <option value="フランス語">フランス語</option>
+        <option value="イタリア語">イタリア語</option>
+        <option value="ドイツ語">ドイツ語</option>
+    </select>
+    <button onclick="addLanguage()">追加</button>
+
+    <script>
+        const labels = [
+            "日本語", "英語", "中国語", "韓国語", "スペイン語", "フランス語", "イタリア語", "ドイツ語"
+        ];
+        let learned = [];
+
+        function updateLearnedList() {
+            const ul = document.getElementById('learnedList');
+            ul.innerHTML = '';
+            if (learned.length === 0) {
+                ul.innerHTML = '<li>まだ習得した言語はありません</li>';
+            } else {
+                learned.forEach(lang => {
+                    const li = document.createElement('li');
+                    li.textContent = lang;
+                    li.className = 'learned';
+                    ul.appendChild(li);
+                });
+            }
+            updateSelectOptions();
+        }
+
+        function updateSelectOptions() {
+            const select = document.getElementById('languageSelect');
+            select.innerHTML = '';
+            labels.forEach(label => {
+                if (!learned.includes(label)) {
+                    const option = document.createElement('option');
+                    option.value = label;
+                    option.textContent = label;
+                    select.appendChild(option);
+                }
+            });
+            if (select.options.length === 0) {
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+            }
+        }
+
+        function addLanguage() {
+            const select = document.getElementById('languageSelect');
+            const lang = select.value;
+            if (lang && !learned.includes(lang)) {
+                learned.push(lang);
+                updateLearnedList();
+            }
+        }
+
+        // 初期表示
+        updateLearnedList();
+    </script>
+</body>
+</html>
