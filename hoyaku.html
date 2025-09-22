@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>簡単翻訳</title>
+	<style>
+		body { font-family: sans-serif; margin: 2em; }
+		textarea { width: 100%; height: 100px; }
+		#result { margin-top: 1em; padding: 1em; border: 1px solid #ccc; background: #f9f9f9; }
+	</style>
+</head>
+<body>
+	<h1>日本語→英語 簡単翻訳</h1>
+	<textarea id="jpText" placeholder="日本語を入力してください"></textarea><br>
+	<button onclick="translate()">翻訳</button>
+	<div id="result"></div>
+	<script>
+	// 簡単な置換辞書
+	const dict = {
+		"こんにちは": "Hello",
+		"ありがとう": "Thank you",
+		"さようなら": "Goodbye",
+		"おはよう": "Good morning",
+		"おやすみ": "Good night",
+		"元気ですか": "How are you?",
+		"私は": "I am",
+		"あなたは": "You are",
+		"日本": "Japan",
+		"英語": "English"
+	};
+	function translate() {
+		let text = document.getElementById('jpText').value;
+		// 句読点のみ除去
+	let cleanText = text.replace(/[。、,.]/g, "").trim();
+		let result = cleanText;
+		for (const [jp, en] of Object.entries(dict)) {
+			result = result.replaceAll(jp, en);
+		}
+		// もし英語に変換されていなければ「未翻訳」と表示
+		if (result === cleanText) {
+			document.getElementById('result').innerText = "未翻訳: " + text;
+		} else {
+			document.getElementById('result').innerText = result;
+		}
+	}
+	</script>
+</body>
+</html>
