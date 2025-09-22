@@ -19,11 +19,18 @@
     <nav>
         <a href="index.html" class="active">翻訳ツール</a>
         <a href="gengo.html" target="_blank">習得言語一覧</a>
+        <a href="login.html" style="float:right;">ログイン</a>
     </nav>
     <div class="container">
         <h1>翻訳ツール メイン画面</h1>
         <p>日本語→英語の簡単翻訳機能を使う場合は、下のボタンをクリックしてください。</p>
         <a href="hoyaku.html"><button class="btn">翻訳画面へ</button></a>
     </div>
+    <script>
+        // ログイン情報がなければログイン画面へリダイレクト
+        if (!localStorage.getItem('userName') || !localStorage.getItem('nativeLang') || !localStorage.getItem('targetLang')) {
+            window.location.href = 'login.html';
+        }
+    </script>
 </body>
 </html>
