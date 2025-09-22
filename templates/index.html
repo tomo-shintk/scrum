@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>習得言語管理</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .lang-list { margin-bottom: 1em; }
+        .learned { color: green; }
+    </style>
+</head>
+<body>
+    <h1>習得した言語一覧</h1>
+    <ul class="lang-list">
+        {% for lang in learned %}
+            <li class="learned">{{ lang }}</li>
+        {% else %}
+            <li>まだ習得した言語はありません</li>
+        {% endfor %}
+    </ul>
+    <h2>言語を追加</h2>
+    <form method="post">
+        <select name="language">
+            {% for label in labels %}
+                {% if label not in learned %}
+                    <option value="{{ label }}">{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit">追加</button>
+    </form>
+</body>
+</html>
