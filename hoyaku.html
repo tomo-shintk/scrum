@@ -11,12 +11,16 @@
 </head>
 <body>
 	<h1>日本語→英語 簡単翻訳</h1>
-	<textarea id="jpText" placeholder="日本語を入力してください"></textarea><br>
-	<button onclick="translate()">翻訳</button>
+	<div>
+		<label><input type="radio" name="direction" value="jp2en" checked>日本語→英語</label>
+		<label><input type="radio" name="direction" value="en2jp">英語→日本語</label>
+	</div>
+	<textarea id="jpText" placeholder="日本語または英語を入力してください"></textarea><br>
+	<button id="translateBtn">翻訳</button>
 	<div id="result"></div>
 	<script>
 	// 簡単な置換辞書
-	const dict = {
+	const dict_jp2en = {
 		"こんにちは": "Hello",
 		"ありがとう": "Thank you",
 		"さようなら": "Goodbye",
@@ -28,24 +32,35 @@
 		"日本": "Japan",
 		"英語": "English"
 	};
+	const dict_en2jp = {
+		"Hello": "こんにちは",
+		"Thank you": "ありがとう",
+		"Goodbye": "さようなら",
+		"Good morning": "おはよう",
+		"Good night": "おやすみ",
+		"How are you?": "元気ですか",
+		"I am": "私は",
+		"You are": "あなたは",
+		"Japan": "日本",
+		"English": "英語"
+	};
 	function translate() {
 		let text = document.getElementById('jpText').value;
-		// 句読点のみ除去
+		let direction = document.querySelector('input[name="direction"]:checked').value;
 		let cleanText = text.replace(/[。、,.]/g, "").trim();
-		// 単語ごとに分割
+		let dict = direction === "jp2en" ? dict_jp2en : dict_en2jp;
 		let words = cleanText.split(/\s+/);
 		let translatedWords = words.map(word => {
-			// 完全一致で辞書変換
 			return dict[word] ? dict[word] : word;
 		});
 		let result = translatedWords.join(" ");
-		// もし英語に変換されていなければ「未翻訳」と表示
 		if (result === cleanText) {
 			document.getElementById('result').innerText = "未翻訳: " + text;
 		} else {
 			document.getElementById('result').innerText = result;
 		}
 	}
+	document.getElementById('translateBtn').addEventListener('click', translate);
 	</script>
 </body>
 </html>
