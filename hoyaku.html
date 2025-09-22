@@ -31,11 +31,14 @@
 	function translate() {
 		let text = document.getElementById('jpText').value;
 		// 句読点のみ除去
-	let cleanText = text.replace(/[。、,.]/g, "").trim();
-		let result = cleanText;
-		for (const [jp, en] of Object.entries(dict)) {
-			result = result.replaceAll(jp, en);
-		}
+		let cleanText = text.replace(/[。、,.]/g, "").trim();
+		// 単語ごとに分割
+		let words = cleanText.split(/\s+/);
+		let translatedWords = words.map(word => {
+			// 完全一致で辞書変換
+			return dict[word] ? dict[word] : word;
+		});
+		let result = translatedWords.join(" ");
 		// もし英語に変換されていなければ「未翻訳」と表示
 		if (result === cleanText) {
 			document.getElementById('result').innerText = "未翻訳: " + text;
