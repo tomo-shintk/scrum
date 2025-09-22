@@ -10,57 +10,135 @@
 	</style>
 </head>
 <body>
-	<h1>日本語→英語 簡単翻訳</h1>
-	<div>
-		<label><input type="radio" name="direction" value="jp2en" checked>日本語→英語</label>
-		<label><input type="radio" name="direction" value="en2jp">英語→日本語</label>
+	<div class="center-container">
+		<h1>日本語⇔英語 翻訳</h1>
+		<div style="margin-bottom:1em;">
+			<label>変換元:
+				<select id="fromLang">
+					<option value="jp">日本語</option>
+					<option value="en">英語</option>
+					<option value="zh">中国語</option>
+					<option value="fr">フランス語</option>
+				</select>
+			</label>
+			<label style="margin-left:2em;">変換先:
+				<select id="toLang">
+					<option value="en">英語</option>
+					<option value="jp">日本語</option>
+					<option value="zh">中国語</option>
+					<option value="fr">フランス語</option>
+				</select>
+			</label>
+		</div>
+		<textarea id="jpText" placeholder="日本語または英語を入力してください"></textarea><br>
+		<button id="translateBtn">翻訳</button>
+		<div id="result"></div>
+		<hr style="margin:2em 0;">
+		<h2>写真で撮って翻訳</h2>
+		<div class="img-row">
+			<input type="file" id="imgInput" accept="image/*" capture="environment">
+			<button id="ocrTranslateBtn">写真で撮って翻訳</button>
+		</div>
+		<div id="imgResult"></div>
 	</div>
-	<textarea id="jpText" placeholder="日本語または英語を入力してください"></textarea><br>
-	<button id="translateBtn">翻訳</button>
-	<div id="result"></div>
 	<script>
+	// 画面中央寄せ用CSS追加
+	const style = document.createElement('style');
+	style.innerHTML = `.center-container { max-width: 600px; margin: 0 auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 2px 8px #ccc; text-align: center; } textarea { width: 90%; margin: 1em auto; display: block; } #result, #imgResult { margin-top: 1em; padding: 1em; border: 1px solid #ccc; background: #f9f9f9; min-height: 2em; } .img-row { display: flex; justify-content: center; align-items: center; gap: 1em; margin-bottom: 1em; } .img-row input[type='file'] { width: auto; }`;
+	document.head.appendChild(style);
+
 	// 簡単な置換辞書
-	const dict_jp2en = {
-		"こんにちは": "Hello",
-		"ありがとう": "Thank you",
-		"さようなら": "Goodbye",
-		"おはよう": "Good morning",
-		"おやすみ": "Good night",
-		"元気ですか": "How are you?",
-		"私は": "I am",
-		"あなたは": "You are",
-		"日本": "Japan",
-		"英語": "English"
-	};
-	const dict_en2jp = {
-		"Hello": "こんにちは",
-		"Thank you": "ありがとう",
-		"Goodbye": "さようなら",
-		"Good morning": "おはよう",
-		"Good night": "おやすみ",
-		"How are you?": "元気ですか",
-		"I am": "私は",
-		"You are": "あなたは",
-		"Japan": "日本",
-		"English": "英語"
+	// 4言語対応辞書
+	const dict = {
+		jp: {
+			"こんにちは": { en: "Hello", zh: "你好", fr: "Bonjour" },
+			"ありがとう": { en: "Thank you", zh: "谢谢", fr: "Merci" },
+			"さようなら": { en: "Goodbye", zh: "再见", fr: "Au revoir" },
+			"おはよう": { en: "Good morning", zh: "早上好", fr: "Bonjour" },
+			"おやすみ": { en: "Good night", zh: "晚安", fr: "Bonne nuit" },
+			"元気ですか": { en: "How are you?", zh: "你好吗？", fr: "Comment ça va?" },
+			"私は": { en: "I am", zh: "我是", fr: "Je suis" },
+			"あなたは": { en: "You are", zh: "你是", fr: "Tu es" },
+			"日本": { en: "Japan", zh: "日本", fr: "Japon" },
+			"英語": { en: "English", zh: "英语", fr: "Anglais" }
+		},
+		en: {
+			"Hello": { jp: "こんにちは", zh: "你好", fr: "Bonjour" },
+			"Thank you": { jp: "ありがとう", zh: "谢谢", fr: "Merci" },
+			"Goodbye": { jp: "さようなら", zh: "再见", fr: "Au revoir" },
+			"Good morning": { jp: "おはよう", zh: "早上好", fr: "Bonjour" },
+			"Good night": { jp: "おやすみ", zh: "晚安", fr: "Bonne nuit" },
+			"How are you?": { jp: "元気ですか", zh: "你好吗？", fr: "Comment ça va?" },
+			"I am": { jp: "私は", zh: "我是", fr: "Je suis" },
+			"You are": { jp: "あなたは", zh: "你是", fr: "Tu es" },
+			"Japan": { jp: "日本", zh: "日本", fr: "Japon" },
+			"English": { jp: "英語", zh: "英语", fr: "Anglais" }
+		},
+		zh: {
+			"你好": { jp: "こんにちは", en: "Hello", fr: "Bonjour" },
+			"谢谢": { jp: "ありがとう", en: "Thank you", fr: "Merci" },
+			"再见": { jp: "さようなら", en: "Goodbye", fr: "Au revoir" },
+			"早上好": { jp: "おはよう", en: "Good morning", fr: "Bonjour" },
+			"晚安": { jp: "おやすみ", en: "Good night", fr: "Bonne nuit" },
+			"你好吗？": { jp: "元気ですか", en: "How are you?", fr: "Comment ça va?" },
+			"我是": { jp: "私は", en: "I am", fr: "Je suis" },
+			"你是": { jp: "あなたは", en: "You are", fr: "Tu es" },
+			"日本": { jp: "日本", en: "Japan", fr: "Japon" },
+			"英语": { jp: "英語", en: "English", fr: "Anglais" }
+		},
+		fr: {
+			"Bonjour": { jp: "こんにちは", en: "Hello", zh: "你好" },
+			"Merci": { jp: "ありがとう", en: "Thank you", zh: "谢谢" },
+			"Au revoir": { jp: "さようなら", en: "Goodbye", zh: "再见" },
+			"Bonne nuit": { jp: "おやすみ", en: "Good night", zh: "晚安" },
+			"Comment ça va?": { jp: "元気ですか", en: "How are you?", zh: "你好吗？" },
+			"Je suis": { jp: "私は", en: "I am", zh: "我是" },
+			"Tu es": { jp: "あなたは", en: "You are", zh: "你是" },
+			"Japon": { jp: "日本", en: "Japan", zh: "日本" },
+			"Anglais": { jp: "英語", en: "English", zh: "英语" }
+		}
 	};
 	function translate() {
 		let text = document.getElementById('jpText').value;
-		let direction = document.querySelector('input[name="direction"]:checked').value;
+		let fromLang = document.getElementById('fromLang').value;
+		let toLang = document.getElementById('toLang').value;
 		let cleanText = text.replace(/[。、,.]/g, "").trim();
-		let dict = direction === "jp2en" ? dict_jp2en : dict_en2jp;
-		let words = cleanText.split(/\s+/);
-		let translatedWords = words.map(word => {
-			return dict[word] ? dict[word] : word;
-		});
-		let result = translatedWords.join(" ");
-		if (result === cleanText) {
+		let result = cleanText;
+		if (dict[fromLang] && fromLang !== toLang) {
+			let words = cleanText.split(/\s+/);
+			let translatedWords = words.map(word => dict[fromLang][word] && dict[fromLang][word][toLang] ? dict[fromLang][word][toLang] : word);
+			result = translatedWords.join(" ");
+		}
+		if (result === cleanText || fromLang === toLang) {
 			document.getElementById('result').innerText = "未翻訳: " + text;
 		} else {
 			document.getElementById('result').innerText = result;
 		}
 	}
 	document.getElementById('translateBtn').addEventListener('click', translate);
+
+	// 画像から文字認識→翻訳（ダミー実装）
+	document.getElementById('ocrTranslateBtn').addEventListener('click', function() {
+		const fileInput = document.getElementById('imgInput');
+		const resultDiv = document.getElementById('imgResult');
+		if (!fileInput.files || fileInput.files.length === 0) {
+			resultDiv.innerText = '画像ファイルを選択してください';
+			return;
+		}
+		// 本来はOCR処理（例：Tesseract.jsやAPI）
+		// ここではダミーで「こんにちは」認識したと仮定
+		let recognizedText = 'こんにちは'; // ダミー
+		// OCR結果を翻訳
+		let fromLang = document.getElementById('fromLang').value;
+		let toLang = document.getElementById('toLang').value;
+		let result = recognizedText;
+		if (dict[fromLang] && fromLang !== toLang) {
+			let words = recognizedText.replace(/[。、,.]/g, "").trim().split(/\s+/);
+			let translatedWords = words.map(word => dict[fromLang][word] && dict[fromLang][word][toLang] ? dict[fromLang][word][toLang] : word);
+			result = translatedWords.join(" ");
+		}
+		resultDiv.innerHTML = `<b>認識文字:</b> ${recognizedText}<br><b>翻訳:</b> ${result}`;
+	});
 	</script>
 </body>
 </html>
