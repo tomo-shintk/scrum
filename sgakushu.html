@@ -43,9 +43,20 @@
             return d.toISOString().slice(0, 10);
         }
         function restoreTodayStudyMs() {
-            const keyMs = 'studyMs_' + getTodayStr();
-            const ms = parseInt(localStorage.getItem(keyMs) || '0', 10);
-            totalStudyMs = ms;
+            const todayStr = getTodayStr();
+            const lastDateKey = 'study_lastDate';
+            const lastDate = localStorage.getItem(lastDateKey);
+            if (lastDate !== todayStr) {
+                // 日付が変わったらリセット
+                totalStudyMs = 0;
+                localStorage.setItem('studyMs_' + todayStr, '0');
+                localStorage.setItem('study_' + todayStr, '0');
+                localStorage.setItem(lastDateKey, todayStr);
+            } else {
+                const keyMs = 'studyMs_' + todayStr;
+                const ms = parseInt(localStorage.getItem(keyMs) || '0', 10);
+                totalStudyMs = ms;
+            }
         }
         function saveTodayStudyMs(ms) {
             const keyMs = 'studyMs_' + getTodayStr();
